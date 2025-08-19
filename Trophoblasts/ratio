@@ -1,0 +1,260 @@
+object <- subset(object, celltype_tro != "Uncertain")
+Cellratio <- prop.table(table(Idents(object), object$phe), margin = 2)
+Cellratio <- Cellratio [, colnames(Cellratio) %in% c("SM-first", "RM-first", "EPE-third","EPE-second","LPE-third",
+                                                     "Normal-first","Normal-second","Normal-third")]
+Cellratio <- as.data.frame(Cellratio)
+colourCount = length(unique(Cellratio$Var1))
+Cellratio$Var2 <- factor(Cellratio$Var2, levels = c("SM-first", "RM-first", "Normal-first", "EPE-second","Normal-second", "Normal-third","EPE-third", "LPE-third"))
+normal <- Cellratio[Cellratio$Var2 %in% c("Normal-first", "Normal-second", "Normal-third"),]
+cell_colors <- c(
+  "VCT1" = "#8dd3c7",    # 浅蓝色
+  "VCT2" = "#ffffb3",    # 浅黄色
+  "VCT3" = "#bebada",    # 淡紫色
+  "VCT4" = "#fb8072",      # 淡红色
+  "VCT5" = "#80b1d3",    # 淡蓝色
+  "VCT6" = "#fdb462",      # 淡橙色
+  "VCT7" = "#b3de69",    # 淡绿色
+  "EVT1" = "#fccde5",      # 淡粉色
+  "EVT2" = "#d9d9d9", # 灰色
+  "EVT3" = "#bc80bd",      # 淡紫色
+  "EVT4" = "#ffed6f",        # 淡黄色
+  "EVT5" = "#cab2d6",       # 淡紫色
+  "EVT6" = "#6a3d9a",       # 淡紫色
+  "EVT7" = "#ffff99",    # 新增：淡黄色
+  "SCT1" = "#b15928",    # 新增：棕色
+  "SCT2" = "#f46d43"     # 新增：淡珊瑚色
+)
+normal$Var1 <- factor(normal$Var1, levels = c("VCT1", "VCT2", "VCT3", "VCT4", "VCT5", "VCT6", "VCT7",
+                                             "EVT1", "EVT2", "EVT3", "EVT4", "EVT5", "EVT6", "EVT7",
+                                             "SCT1", "SCT2"))
+p<-ggplot(normal, aes(x = Var2, y = Freq, fill = Var1,stratum = Var1, alluvium = Var1)) +
+  geom_stratum(width = 0.5, color='white')+
+  geom_alluvium(alpha = 0.5,
+                width = 0.5,
+                curve_type = "linear")+
+  geom_bar(stat = "identity", position = "stack", width = 0.5) +
+  scale_fill_manual(values = cell_colors) +
+  labs(title = "Celltypes Proportions in Normal pregnancy",
+       x = "Gestation period",
+       y = "Percentage (%)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 20),  # 设置横坐标字体大小
+    axis.text.y = element_text(size = 20),                        # 设置纵坐标字体大小
+    axis.title.x = element_text(size = 16),                       # 设置横坐标标题字体大小
+    axis.title.y = element_text(size = 16),                       # 设置纵坐标标题字体大小
+    plot.title = element_text(size = 16, face = "bold"),          # 设置标题字体大小和样式
+    legend.text = element_text(size = 14),                        # 设置图例文字字体大小
+    legend.title = element_text(size = 16)) +
+  guides(fill = guide_legend(title = "Celltypes"))
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/cellratio.png", plot = p, width = 8, height = 10, dpi = 300)
+
+first<-Cellratio[Cellratio$Var2 %in% c("Normal-first", "SM-first", "RM-first"),]
+first$Var2 <- factor(first$Var2, levels = c("Normal-first", "RM-first", "SM-first"))
+first$Var1 <- factor(first$Var1, levels = c("VCT1", "VCT2", "VCT3", "VCT4", "VCT5", "VCT6", "VCT7",
+                                             "EVT1", "EVT2", "EVT3", "EVT4", "EVT5", "EVT6", "EVT7",
+                                             "SCT1", "SCT2"))
+p<-ggplot(first, aes(x = Var2, y = Freq, fill = Var1,stratum = Var1, alluvium = Var1)) +
+  geom_stratum(width = 0.5, color='white')+
+  geom_alluvium(alpha = 0.5,
+                width = 0.5,
+                curve_type = "linear")+
+  geom_bar(stat = "identity", position = "stack", width = 0.5) +
+  scale_fill_manual(values = cell_colors,breaks = levels(first$Var1)) +
+  labs(title = "Celltypes Proportions in First-trimester",
+       x = "Gestation period",
+       y = "Percentage (%)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 20),  # 设置横坐标字体大小
+    axis.text.y = element_text(size = 20),                        # 设置纵坐标字体大小
+    axis.title.x = element_text(size = 16),                       # 设置横坐标标题字体大小
+    axis.title.y = element_text(size = 16),                       # 设置纵坐标标题字体大小
+    plot.title = element_text(size = 16, face = "bold"),          # 设置标题字体大小和样式
+    legend.text = element_text(size = 14),                        # 设置图例文字字体大小
+    legend.title = element_text(size = 16)) +
+  guides(fill = guide_legend(title = "Celltypes"))
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/first.png", plot = p, width = 8, height = 10, dpi = 300)
+
+third<-Cellratio[Cellratio$Var2 %in% c("Normal-third", "EPE-third", "LPE-third"),]
+third$Var2 <- factor(third$Var2, levels = c("Normal-third", "EPE-third", "LPE-third"))
+third$Var1 <- factor(third$Var1, levels = c("VCT1", "VCT2", "VCT3", "VCT4", "VCT5", "VCT6", "VCT7",
+                                             "EVT1", "EVT2", "EVT3", "EVT4", "EVT5", "EVT6", "EVT7",
+                                             "SCT1", "SCT2"))
+p<-ggplot(third, aes(x = Var2, y = Freq, fill = Var1,stratum = Var1, alluvium = Var1)) +
+  geom_stratum(width = 0.5, color='white')+
+  geom_alluvium(alpha = 0.5,
+                width = 0.5,
+                curve_type = "linear")+
+  geom_bar(stat = "identity", position = "stack", width = 0.5) +
+  scale_fill_manual(values = cell_colors,breaks = levels(third$Var1)) +
+  labs(title = "Celltypes Proportions in Third-trimester",
+       x = "Gestation period",
+       y = "Percentage (%)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 20),  # 设置横坐标字体大小
+    axis.text.y = element_text(size = 20),                        # 设置纵坐标字体大小
+    axis.title.x = element_text(size = 16),                       # 设置横坐标标题字体大小
+    axis.title.y = element_text(size = 16),                       # 设置纵坐标标题字体大小
+    plot.title = element_text(size = 16, face = "bold"),          # 设置标题字体大小和样式
+    legend.text = element_text(size = 14),                        # 设置图例文字字体大小
+    legend.title = element_text(size = 16)) +
+  guides(fill = guide_legend(title = "Celltypes"))
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/third.png", plot = p, width = 8, height = 10, dpi = 300)
+
+
+#显著性检验
+new<-subset(object,phe=="Normal-second"|phe=="Normal-first"|phe=="SM-first"|phe=="RM-first"|phe=="Normal-third"|phe=="EPE-third"|phe=="LPE-third")
+Idents(new)<-new$detail.ident
+new$celltype_tro<-droplevels(new$celltype_tro)
+levels_se1 <- levels(new2)#总的
+levels_se2 <- levels(new)
+idx <- match(levels_se2, levels_se1)
+id2 <-new.ids[idx]
+sample <-  id2
+names(id2) <- levels(new)
+new<- RenameIdents(new, id2)
+new$subphe<-Idents(new)
+Idents(new)<-new$celltype_tro
+Cellratio<- prop.table(table(Idents(new), new$subphe), margin = 2)
+Cellratio<- data.frame(Cellratio)
+cellper <- dcast(Cellratio,Var2~Var1, value.var = "Freq")#长数据转为宽数据
+rownames(cellper) <- cellper[,1]
+cellper <- cellper[,-1]
+group <- gsub("(\\D+)\\d*.*", "\\1", sample)
+first_digit <- as.numeric(sub(".*?(\\d+).*", "\\1", sample))
+# 根据前缀和第一个数字确定阶段
+stage <- ifelse(grepl("^(SM|RM)", group), "First",
+                ifelse(grepl("^LPE", group), "Third",
+                ifelse(first_digit == 1, "First",
+                ifelse(first_digit == 2, "Second", "Third"))))
+samples <- data.frame(sample, group,stage)#创建数据框
+rownames(samples)=samples$sample
+cellper$sample <- samples[rownames(cellper),'sample']#R添加列
+cellper$group <- samples[rownames(cellper),'group']
+cellper$stage<- samples[rownames(cellper),'stage']
+
+cellper<- cellper[cellper$stage != "Second", ]
+sce_groups = c("VCT1","VCT2","VCT3","VCT4","VCT5","VCT6","VCT7","EVT1", "EVT2","EVT3","EVT4","EVT5","EVT6","EVT7","SCT1","SCT2" )
+pplist = list()
+for(group_ in sce_groups){
+group_="EVT4"
+cellper_  = cellper %>% select(one_of(c('sample','group','stage',group_)))#选择一组数据
+names(cellper_)[4] <- "percentage"
+cellper_$stage <- factor(cellper_$stage, levels = c("First", "Third"))
+cellper_ <- cellper_ %>%
+    group_by(stage) %>%
+    mutate(
+      group = case_when(
+        stage == "First" ~ factor(group, levels = c("N", "RM", "SM")),
+        stage == "Third" ~ factor(group, levels = c("N", "EPE", "LPE"))
+      )
+    )
+stat.test <- cellper_ %>%
+  group_by(stage) %>%
+  pairwise_wilcox_test(
+    percentage ~ group, 
+    p.adjust.method = "BH",  # 校正多重检验
+    paired = FALSE
+  ) 
+stat.test <- stat.test %>%
+  mutate(p.adj.signif = ifelse(is.nan(p.adj), "ns", p.adj.signif))
+stat.test <- stat.test %>% add_xy_position(x = "stage")
+
+bxp <- ggboxplot(
+  cellper_, x = "stage", y = "percentage",
+  color = "group", palette = "jco"
+  )+ scale_x_discrete(name = "Stage", breaks = c("First","Third"))+labs(title = group_,y='Percentage (%)')+
+  theme(
+      text = element_text(size = 16),  # 全局字体大小
+      axis.text.x = element_text(size = 20),  # 横坐标字体大小
+      axis.text.y = element_text(size = 20),  # 纵坐标字体大小
+      axis.title.x = element_text(size = 16),  # 横坐标标题字体大小
+      axis.title.y = element_text(size = 16),  # 纵坐标标题字体大小
+      plot.title = element_text(size = 20, face = "bold"),  # 图标题字体大小和样式
+      legend.text = element_text(size = 16),  # 图例文字字体大小
+      legend.title = element_text(size = 12)  # 图例标题字体大小
+    )
+bxp<-bxp+ stat_pvalue_manual(
+  stat.test, label = "p.adj.signif", 
+  step.increase = 0.08, hide.ns = TRUE, tip.length = 0,label.size=4
+  )
+pplist[[group_]] = bxp
+}
+pdf(file = "/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/All.pdf", w = 20, h = 15)
+plot_grid(pplist[['VCT1']],
+          pplist[['VCT2']],
+          pplist[['VCT3']],
+          pplist[['VCT4']],
+          pplist[['EVT1']],
+          pplist[['EVT2']],pplist[['EVT3']],pplist[['EVT4']],pplist[['EVT5']],
+          pplist[['EVT6']],pplist[['SCT1']],pplist[['SCT2']],ncol =4,labels="All Samples",hjust=-1.2)
+while (!is.null(dev.list()))  dev.off()
+
+pdf(file = "/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/sig.pdf", w = 15, h = 10)
+plot_grid(pplist[['VCT3']],
+          pplist[['EVT1']],
+          pplist[['EVT2']],pplist[['EVT3']],pplist[['EVT4']],pplist[['SCT2']],ncol =3,labels="Statistical significance",hjust=-1.2)
+while (!is.null(dev.list()))  dev.off()
+
+
+#正常
+cellper <- cellper[cellper$group == "N", ]
+cellper$stage <- factor(
+  cellper$stage,
+  levels = c("First", "Second", "Third")  # 关键：明确指定顺序
+)
+pplist = list()
+for (group_ in sce_groups) {
+group_="EVT3"
+cellper_sub <- cellper %>% 
+    select(sample, stage, !!sym(group_)) %>%
+    rename(percentage = !!sym(group_))  # 重命名列名  
+  # Wilcoxon检验：比较不同stage间的差异
+stat.test <- cellper_sub %>%
+    pairwise_wilcox_test(
+      percentage ~ stage,
+      p.adjust.method = "BH",  # 校正多重检验
+      paired = FALSE
+    ) %>%add_xy_position(x = "stage")  # 修正为stage  
+  # 绘制箱线图
+bxp <- ggboxplot(
+    cellper_sub, 
+    x = "stage",          # 修正为stage
+    y = "percentage", 
+    #fill = "stage",       # 按stage填充颜色
+    palette = "jco",      # 使用jco调色板
+    color = "stage",
+    width = 0.6,
+    alpha = 0.8
+  ) + labs(title = group_, x = "Gestation Stage", y = "Percentage (%)") +
+  theme(
+      text = element_text(size = 16),  # 全局字体大小
+      axis.text.x = element_text(size = 20),  # 横坐标字体大小
+      axis.text.y = element_text(size = 20),  # 纵坐标字体大小
+      axis.title.x = element_text(size = 16),  # 横坐标标题字体大小
+      axis.title.y = element_text(size = 16),  # 纵坐标标题字体大小
+      plot.title = element_text(size = 20, face = "bold"),  # 图标题字体大小和样式
+      legend.text = element_text(size = 16),  # 图例文字字体大小
+      legend.title = element_text(size = 12)  # 图例标题字体大小
+    )
+bxp <- bxp + stat_pvalue_manual(
+    stat.test,label = "p.adj.signif", 
+    hide.ns = TRUE,
+    tip.length = 0.01,
+    step.increase = 0.1,label.size=4
+  )
+  pplist[[group_]] <- bxp
+}
+
+pdf(file = "/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/normal.pdf", w = 20, h = 20)
+plot_grid(pplist[['VCT1']],
+          pplist[['VCT2']],
+          pplist[['VCT3']],
+          pplist[['VCT4']],
+          pplist[['VCT5']],pplist[['EVT1']],pplist[['EVT2']],pplist[['EVT3']],
+          pplist[['EVT4']],pplist[['EVT5']],pplist[['EVT6']],pplist[['SCT1']],pplist[['SCT2']],ncol =4,labels="All Samples",hjust=-1.2)
+while (!is.null(dev.list()))  dev.off()
+pdf(file = "/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/normal_sig.pdf", w = 15, h = 5)
+plot_grid(pplist[['VCT4']],
+          pplist[['EVT1']],
+          pplist[['EVT3']],ncol =3,labels="Statistical significance",hjust=-1.2)
+while (!is.null(dev.list()))  dev.off()
