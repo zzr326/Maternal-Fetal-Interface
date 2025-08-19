@@ -1,0 +1,41 @@
+markers<-FindAllMarkers(object, assay = 'RNA', min.pct = 0.25, logfc.threshold = 0.25)
+markers_filtered <- markers %>%
+  filter(cluster != "Uncertain")
+df_sig <- markers_filtered %>% filter(p_val_adj <= 0.05,avg_log2FC>=0.25)
+df_top300 <- df_sig %>%
+  group_by(cluster) %>%
+  arrange(desc(avg_log2FC)) %>%
+  slice_head(n = 500) %>%
+  ungroup() 
+
+group <- data.frame(gene=df_top300$gene,
+                    group=df_top300$cluster)
+ 
+Gene_ID <- bitr(df_top300$gene, fromType="SYMBOL", 
+            toType="ENTREZID", 
+            OrgDb="org.Hs.eg.db")
+ 
+#构建文件并分析
+godata  <- merge(Gene_ID,group,by.x='SYMBOL',by.y='gene')
+data_GO <- compareCluster(
+  ENTREZID~group, 
+  data=godata, 
+  fun="enrichGO", 
+  OrgDb="org.Hs.eg.db",
+  ont = "BP",
+  pAdjustMethod = "BH",
+  pvalueCutoff = 0.05,
+  qvalueCutoff = 0.05
+)
+ 
+data_GO_sim <- simplify(data_GO, cutoff=0.7, by="p.adjust",select_fun=min)
+keywords <- c("epithelial","adhesion","ATP","chromosome","DNA", "nucleoside","acid","transport","secretion","extracellular matrix"
+             ,"antigen","leukocyte","actin","interferon","virus")
+
+# 筛选包含这些单词的GO term
+filtered_data <- data_GO_sim %>%
+  filter(Reduce(`|`, lapply(keywords, function(keyword) {
+    grepl(keyword, Description, ignore.case = TRUE)
+  })))
+dotplot(filtered_data,showCategory=5)
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/dotplot_GO_sim.png", width = 12, height = 26, dpi = 300)
