@@ -1,0 +1,27 @@
+markergene=c("CD79A","CD79B","MS4A1",#B细胞，19
+             "HBE1","HBG1","HBA1",#EB，16
+             "PECAM1","CDH5","CD34",#Endo,10
+             "EPCAM","PCCA","SLPI",#EPI,18
+             "HLA-G","NOTUM","DIO2",#EVT,5,6,21,23,31,36
+             "CD14","CD68","MS4A7",#MAC,2,7,26,33,38
+             "NKG7","GZMA","KLRD1",#NK,3,35
+             "CYP19A1","CGA","GDF15",#SCT,12,14
+             "COL1A1","COL1A2","COL3A1",#ST,1,17,20,22,24,25,27,32,37
+             "CD3D","CD3G","TRAC",#T,8
+             "PAGE4","PEG10","XAGE3",#VCT,0，9，13，15，28，29，30
+             "NDUFA4L2","MYH11","ACTA2",#SMC,11
+             "S100A8","S100A9","S100A12"#MONO,4，34
+            )
+DotPlot(data, features = markergene, assay='RNA') +RotatedAxis()+  scale_x_discrete("")
+
+new.cluster.ids <- c("VCT", "ST", "MAC", "NK", "MONO", 
+                     "EVT","EVT", "MAC", "T","VCT","Endo",
+                     "SMC","SCT","VCT","SCT","VCT",
+                     "EB","ST","EPI ","B","ST",
+                     "EVT","ST","EVT","ST","ST",
+                     "MAC","ST","VCT","VCT","VCT",
+                     "EVT","ST","MAC","MONO","NK",
+                     "EVT","ST","MAC")
+names(new.cluster.ids) <- levels(data)
+data<- RenameIdents(data, new.cluster.ids)
+data$celltype<-Idents(data)
