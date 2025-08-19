@@ -1,0 +1,35 @@
+options(future.globals.maxSize = 10*1024^3)
+library(Seurat)
+library(DoubletFinder)
+library(dplyr)
+library(tidyverse)
+
+count<- Read10X("/share/home/bgi_zhangzhr/MFF/RAW/CNP0003201/", gene.column = 1)
+assay<- CreateAssay5Object(counts = count)
+data<- CreateSeuratObject(assay)
+data@meta.data$orig.ident="CNP0003201"
+inherits(data[["RNA"]], "Assay5")
+
+data<- PercentageFeatureSet(data,"^MT-", col.name = "percent.mt")
+selected_c <- WhichCells(data, expression = (nFeature_RNA > 300 & nFeature_RNA < 5000 & percent.mt <20&nCount_RNA>200&nCount_RNA<40000))  
+selected_f <- rownames(data)[Matrix::rowSums(data) > 3]
+data<- subset(data, features = selected_f, cells = selected_c)
+#排除核糖体基因，假基因
+data <- data[!grepl("^RP[SL]|MTRNR2L8|MTRNR2L12|MTRNR2L10", rownames(data)), ]
+data@meta.data$detail.ident=data@active.ident
+data$orig.ident="CNP0003201"
+#去除双细胞
+name="scRNA"
+dim.usage=30
+sweep.res.list <- paramSweep(data, PCs = 1:dim.usage, sct = TRUE)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+nExp_poi <- round(0.05*ncol(data))
+p<-as.numeric(as.vector(bcmvn[bcmvn$MeanBC==max(bcmvn$MeanBC),]$pK))
+data <- doubletFinder(data, PCs = 1:dim.usage, pN = 0.25, pK = p, nExp = nExp_poi, reuse.pANN = FALSE, sct = TRUE)
+colnames(data@meta.data)[ncol(data@meta.data)] = "doublet_info"
+data@meta.data$doublet_info
+Idents(data) <- "doublet_info"
+data=subset(x = data, idents="Singlet")
+Idents(data)<-data$orig.ident
+saveRDS(data, file = "/share/home/bgi_zhangzhr/MFF/New/00.filter/CNP0003201.rds")
