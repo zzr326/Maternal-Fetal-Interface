@@ -1,0 +1,38 @@
+options(future.globals.maxSize = 100 * 1024^3)  # 10 * 1024^3 字节等于10GB
+library(Seurat)
+library(harmony)
+library(future)
+
+# 设置并行计算
+plan("multicore", workers = 4)
+
+indir="/share/org/BGI/bgi_zhangzhr/MFF/New/02.rna/"
+data.dirs=list.files(indir)
+data=readRDS(paste0(indir,data.dirs[1]))
+for(i in (2:length(data.dirs))){
+    data2=readRDS(paste0(indir,data.dirs[i]))
+    data=merge(data,data2)
+}
+data
+na_columns <- colnames(data[[]])[colSums(is.na(data[[]])) > 0]
+data@meta.data <- data@meta.data[, !colnames(data@meta.data) %in% na_columns]
+data =JoinLayers(data)
+saveRDS(data, file = "/share/org/BGI/bgi_zhangzhr/MFF/New/03.merge/merge.rds")
+
+object<-data
+rm(data)
+object <- NormalizeData(object)
+object <- FindVariableFeatures(object, verbose = F)
+object <- ScaleData(object, verbose = F)
+object <- RunPCA(object, verbose = F)
+
+#去批次
+object <- RunHarmony(object,reduction = "pca",group.by.vars = c("detail.ident"),reduction.save = "harmony")
+object <- RunUMAP(object, reduction = "harmony", dims = 1:30,reduction.name = "umap")
+
+# 聚类
+object<- FindNeighbors(object, reduction = "harmony", dims = 1:30)
+object <- FindClusters(object, resolution = 0.5)
+
+
+saveRDS(object , file = "/share/org/BGI/bgi_zhangzhr/MFF/New/03.merge/harmony.rds")
