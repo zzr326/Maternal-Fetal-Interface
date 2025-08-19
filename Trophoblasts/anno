@@ -1,0 +1,46 @@
+object=subset(data,celltype =="VCT"|celltype =="SCT"|celltype =="EVT")
+object <- NormalizeData(object)
+object <- FindVariableFeatures(object, verbose = F)
+object <- ScaleData(object, verbose = F)
+object <- RunPCA(object, verbose = F)
+pct <- object[["pca"]]@stdev / sum(object[["pca"]]@stdev) * 100  # 计算每个 PC 的方差贡献率
+cumu <- cumsum(pct)  # 计算累计方差贡献率
+
+# 找到累计方差贡献率超过 90% 的最小 PC 数量
+pc.use <- min(which(cumu > 90))[1]
+
+# 绘制 Elbow Plot 并添加拐点线
+ElbowPlot(object,ndims = 50)$data %>%
+  ggplot() +
+  geom_point(aes(x = dims, y = stdev)) +
+  geom_vline(xintercept = pc.use, color = "darkred", linetype = "dashed") +  # 添加拐点线
+  theme_bw() + 
+  labs(title = "Elbow plot: quantitative approach")
+#去批次
+object <- RunHarmony(object,reduction = "pca",group.by.vars = c("detail.ident"),reduction.save = "harmony",max.iter = 100,plot_convergence = TRUE,early_stop = TRUE)
+object <- RunUMAP(object, reduction = "harmony", dims = 1:pc.use,reduction.name = "umap")
+
+# 聚类
+object<- FindNeighbors(object, reduction = "harmony", dims = 1:pc.use)
+object <- FindClusters(object, resolution = 0.2)
+options(repr.plot.width =20, repr.plot.height =6)
+
+gene=c("HLA-G","NOTUM","DIO2","LAIR2","HTRA4","SLCO4A1","ASCL2","QSOX1",#EVT
+        "CYP19A1","ERVW-1","ERVFRD-1","GDF15","LCMT1-AS2","SLC13A4","GH2","PSG4",#SCT
+       "PARP1","SLC27A2","SLC22A11","PEG10","SMAGP","VGLL1","ISYNA1","DUSP9"#VCT
+      )
+p<-DotPlot(object, features = gene, assay='RNA',group.by="seurat_clusters") +RotatedAxis()+  scale_x_discrete("")+
+  geom_vline(xintercept = c(8.5, 16.5), linetype = "dashed", color = "black", size = 0.5)+   
+       theme(text = element_text(size = 16),axis.text.x = element_text(size = 16), axis.text.y = element_text(size = 16)) 
+
+# 保存为图片
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/marker.png", plot = p, width = 15, height = 6)
+
+new.cluster.ids <- c("EVT1","VCT1","EVT2","EVT3","VCT2","VCT3","SCT1",
+                     "VCT4","Uncertain","SCT2","EVT4","EVT5","VCT5",
+                     "EVT6","VCT6","VCT7","EVT7")
+names(new.cluster.ids) <- levels(object)
+object <- RenameIdents(object, new.cluster.ids)
+
+# 将重命名后的idents存储在object$EC_celltype中
+object$celltype_tro <- Idents(object)
