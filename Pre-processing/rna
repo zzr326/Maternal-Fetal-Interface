@@ -1,0 +1,20 @@
+library(Seurat)
+library(celda)
+
+dir="/share/org/BGI/bgi_zhangzhr/MFF/New/01.double/"
+dim.usage=30
+
+args <- commandArgs(trailingOnly = TRUE)
+param <- args[1]
+print(param)
+data<-readRDS(paste0(dir,param))
+
+counts <- data@assays$RNA@layers$counts
+
+# 需要把结果储存在新变量
+decontX_results <- decontX(counts)
+data$Contamination =decontX_results$contamination
+low_con= data[,data$Contamination < 0.2] #保留小于等于0.2的细胞
+print(table(data$orig.ident))
+print(table(data$detail.ident))
+saveRDS(data, paste0("/share/org/BGI/bgi_zhangzhr/MFF/New/02.rna/",param))
