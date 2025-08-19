@@ -1,0 +1,67 @@
+data<-readRDS("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/cds_all.rds")
+
+p1=plot_cell_trajectory(data,color_by="Pseudotime", size=1,show_backbone=TRUE) 
+p2=plot_cell_trajectory(data, color_by = "celltype_all")
+p3=plot_cell_trajectory(data, color_by = "State")
+p=p1|p2|p3
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/pseudo.png", plot = p, width = 16, height = 8, dpi = 300)
+
+test=orderCells(data,root_state = 11) 
+p1=plot_cell_trajectory(test,color_by="Pseudotime", size=1,show_backbone=TRUE) +theme(text = element_text(size = 25))
+p2=plot_cell_trajectory(test, color_by = "celltype_all")+theme(text = element_text(size = 25))
+p=p1|p2
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/pseudo_root.png", plot = p, width = 12, height = 6, dpi = 300)
+saveRDS(test,"/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/root.rds")
+
+test<-readRDS("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/root.rds")
+pheno_data <- pData(test@phenoData)
+# 确保 phe 是一个因子，并且按照指定顺序排列
+pheno_data$phe <- factor(pheno_data$phe, levels = c("Normal-first", "RM-first","SM-first","Normal-second", "EPE-second",
+                                                    "Normal-third","EPE-third","LPE-third","GDM-third"))
+row <- c(1, 1, 1, 2, 2, 3, 3, 3, 3)
+col <- c(1, 2, 3, 1, 2, 1, 2, 3, 4)
+names(row) <- levels(pheno_data$phe)
+names(col) <- levels(pheno_data$phe)
+pheno_data$row <- row[pheno_data$phe]
+pheno_data$col <- col[pheno_data$phe]
+new_phenoData <- AnnotatedDataFrame(pheno_data)
+# 将新的 phenoData 设置到 test 对象中
+test@phenoData <- new_phenoData
+p <- plot_cell_trajectory(test, color_by = "celltype_all", size = 1, show_backbone = TRUE) +
+  facet_grid(row ~ col, scales = "free", space = "free", labeller = labeller(phe = label_value)) +
+  theme(strip.text.y = element_blank(), strip.background.y = element_blank())+
+  theme(    text = element_text(size = 40))+
+  guides(color = guide_legend(override.aes = list(size = 6)))
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/phe_root.png", plot = p, width = 36, height = 24, dpi = 300)
+
+
+
+
+
+diff<- read.csv("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/diff_results.csv", row.names = 1)
+gene_to_cluster = diff %>% 
+  arrange(qval) %>% 
+  head(70) %>% 
+  pull(gene_short_name)
+head(gene_to_cluster)
+p<-plot_pseudotime_heatmap(test[gene_to_cluster,],
+                        num_clusters = 8, 
+                        show_rownames = TRUE,
+                        cores = 4,return_heatmap = TRUE,
+                        hmcols = colorRampPalette(c("navy", "white", "firebrick3"))(100))
+p<-p+theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 20),  # 设置横坐标字体大小
+    axis.text.y = element_text(size = 20),                        # 设置纵坐标字体大小
+    axis.title.x = element_text(size = 16),                       # 设置横坐标标题字体大小
+    axis.title.y = element_text(size = 16),                       # 设置纵坐标标题字体大小
+    legend.text = element_text(size = 14),                        # 设置图例文字字体大小
+    legend.title = element_text(size = 16)) 
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/gene_heat.png", plot = p, width = 4.5, height = 7, dpi = 300,pointsize = 20)
+
+
+gene=head(gene_to_cluster,9)
+# 横坐标是按照pseudotime排好顺序的
+p<-plot_genes_in_pseudotime(test[gene,],
+                  color_by = "celltype_all",
+                  nrow= 3, 
+                  ncol = NULL )
+ggsave("/share/org/BGI/bgi_zhangzhr/MFF/New/06.tro/monocle/new2/gene_dot.png", plot = p, width = 5, height = 7, dpi = 300)
